@@ -1,69 +1,101 @@
+
+/*
+ *
+ *
+ *
+ */
+
 #include "bolzano.h"
 
-bool teo_bolzano(double a, double b){
-  return (a * b < 0) ? true : false;
-}
+bool criterio_de_parada(double a, double b, double error, int tipo) { // Para experimentar outros critérios.
 
-bool criterio_de_parada(double dif, double fx, double x, double x_anterior, double error){
-  if(fabs(dif) <= error && fabs(fx) <= error && fabs(x - x_anterior) <= error)
-    return true;
-  else return false;
-}
+  switch(tipo){
+    case 1:
+      return fabs(b - a) > error ? true : false; // Critério |b - a| < e
 
-double metodo_da_bissecCao(double (*func)(double x), double a, double b, double error)
-{ 
-  double atual, anterior, lim_sup, lim_inf;
-  atual = b;
-  anterior = 0;
-  lim_sup = b;
-  lim_inf = a;
+    case 2:
+      return fabs(b - a) > error ? true : false; // Critério | x_(k + 1) - x_(k) | < e 
 
-  atual = (lim_inf + lim_sup)/2.0;
-
-  while(!(criterio_de_parada((lim_sup - lim_inf), func(atual), atual, anterior, error))){
-
-    anterior = atual;
-
-    if(teo_bolzano(func(lim_inf), func(atual)))
-      lim_sup = atual;
-    else lim_inf = atual;
-
-    atual = (lim_inf + lim_sup)/2.0;
+    default:
+      return fabs(a) > error ? true :false;      // Critério | f(x) | < e
   }
-  return atual;
 }
 
-double metodo_da_bissecCao_Melhorado(double (*func)(double x), double a, double b, double error)
-{ 
-  double x, anterior, fx, fa, fb;
+double metodo_da_bissecCao(double (*func)(double x), double a, double b, double error) {  
+  
+  double x, fx, fa, fb;
+  // double x_anterior;
+  int i = 0; // Para printf.
 
-  fa = func(a);
-  fb = func(b);
+  fa = func(a);  // Optei pelo fa e fb para evitar muitas chamadas de *func.  
+  fb = func(b); // Talvez seja interessante observar alguma implementação que evite isso... 
 
-  if(fa * fb >= 0)
-    return 0;
+  if(fa * fb >= 0){ // Tratamento de erro (P.S. idealmente nunca será usada)
+    printf("> [ERRO]: O intervalo dado não satisfaz o teo. de Bolazano\n");
+    exit(1);
+  }
 
-  x = (a + b) / 2.0;
-  anterior = x;
-
-  while(fabs(b - a) > error){
-
-    x = (a + b) / 2.0;
+  do {
+    x  = (a + b) / 2.0; // Recorta o intevalo no meio.
     fx = func(x);
 
-    if(fa * fx < 0){
-      b = x;
+    printf("        a = %+.15lf | fa = %+.15lf\n  [%2d]: b = %+.15lf | fb = %+.15lf\n        x = %+.15lf | fx = %+.15lf\n\n", 
+        a, fa, i++, b, fb, x, fx);
+    
+    if(fa * fx < 0){  // Observa qual intervalo satisfaz o teo. Bolazano.
+      // x_anterior = b;
+      b  = x;
       fb = fx;
     }
     else{
-      a = x;
+      // x_anterior = a;
+      a  = x;
       fa = fx;
     }
-    
-    if(fabs(x - anterior) <= error && fabs(fx) <= error)
-      break;
 
-    anterior = x;
+  } while(fabs(b - a) > error); // Critério de parada!
+
+  return x;
+}
+
+double metodo_da_poscCao_falsa(double (*func)(double x), double a, double b, double error) {  
+  
+  double x, fx, fa, fb;
+  // double x_anterior;
+
+  fa = func(a); 
+  fb = func(b);
+
+  if(fa * fb >= 0){
+    printf("> [ERRO]: O intervalo dado não satisfaz o teo. de Bolazano\n");
+    exit(1);
   }
+
+  if(fb - fa == 0){ // Tratamento da possibilidade de divisão por zero...
+    printf("> [ERRO]: Divisão por zero\n");
+    exit(1); 
+  } // CONTUDO, é urgente uma verificação dentro do loop!
+
+  do {
+    x  = a - (fa * (b - a))/(fb - fa); // Encontra-se o ponto da reta def. (a, fa) -- (b, fb) que cruza a abscissa.
+
+    /* Outra opção com multiplicação extra, a primeira me pareceu mais agradável...*/
+    // x = (a * fb - b * fa ) / (fb - fa); 
+
+    fx = func(x);
+    
+    if(fa * fx < 0){
+      // x_anterior = b;
+      b  = x;
+      fb = fx;
+    }
+    else{
+      // x_anterior = a;
+      a  = x;
+      fa = fx;
+    }
+
+  } while(fabs(b - a) > error); // Critério de parada!
+
   return x;
 }
