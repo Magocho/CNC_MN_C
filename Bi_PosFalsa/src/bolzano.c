@@ -61,7 +61,8 @@ double metodo_da_bissecCao(double (*func)(double x), double a, double b, double 
 double metodo_da_poscCao_falsa(double (*func)(double x), double a, double b, double error) {  
   
   double x, fx, fa, fb;
-  // double x_anterior;
+  double x_anterior;
+  int i = 0; // Para printf.
 
   fa = func(a); 
   fb = func(b);
@@ -81,19 +82,25 @@ double metodo_da_poscCao_falsa(double (*func)(double x), double a, double b, dou
 
     /* Outra opção com multiplicação extra, a primeira me pareceu mais agradável...*/
     // x = (a * fb - b * fa ) / (fb - fa); 
-
+     
     fx = func(x);
     
+    printf("        a = %+.15lf | fa = %+.15lf\n  [%2d]: b = %+.15lf | fb = %+.15lf\n        x = %+.15lf | fx = %+.15lf\n\n", 
+        a, fa, i++, b, fb, x, fx);
+
     if(fa * fx < 0){
-      // x_anterior = b;
+      x_anterior = x;
       b  = x;
       fb = fx;
     }
     else{
-      // x_anterior = a;
+      x_anterior = x;
       a  = x;
       fa = fx;
     }
+
+    if(fabs(x - x_anterior) < error && fabs(fx) < error)
+      return x;
 
   } while(fabs(b - a) > error); // Critério de parada!
 
